@@ -45,7 +45,7 @@ console.time(TEST)
 for (i = 0; i < dim; i++) {
   for (j = 0; j < dim; j++) {
     for (k = 0; k < dim; k++) {
-      assert.strict.equal(dataset.match(prefix + i, prefix + j, prefix + k, '').length, 1)
+      assert.strict.equal(dataset.match(rdf.namedNode(prefix + i), rdf.namedNode(prefix + j), rdf.namedNode(prefix + k), rdf.defaultGraph()).size, 1)
     }
   }
 }
@@ -55,17 +55,17 @@ TEST = `- Finding all ${dimCubed} triples in the default graph ${dimSquared * 2}
 console.time(TEST)
 for (i = 0; i < dim; i++) {
   for (j = 0; j < dim; j++) {
-    assert.strict.equal(dataset.match(prefix + i, prefix + j, null, '').length, dim)
+    assert.strict.equal(dataset.match(rdf.namedNode(prefix + i), rdf.namedNode(prefix + j), null, rdf.defaultGraph()).size, dim)
   }
 }
 for (i = 0; i < dim; i++) {
   for (j = 0; j < dim; j++) {
-    assert.strict.equal(dataset.match(prefix + i, null, prefix + j, '').length, dim)
+    assert.strict.equal(dataset.match(rdf.namedNode(prefix + i), null, rdf.namedNode(prefix + j), rdf.defaultGraph()).size, dim)
   }
 }
 for (i = 0; i < dim; i++) {
   for (j = 0; j < dim; j++) {
-    assert.strict.equal(dataset.match(null, prefix + i, prefix + j, '').length, dim)
+    assert.strict.equal(dataset.match(null, rdf.namedNode(prefix + i), rdf.namedNode(prefix + j), rdf.defaultGraph()).size, dim)
   }
 }
 console.timeEnd(TEST)
@@ -73,13 +73,13 @@ console.timeEnd(TEST)
 TEST = `- Finding all ${dimCubed} triples in the default graph ${dimSquared * 3} times (2 variables)`
 console.time(TEST)
 for (i = 0; i < dim; i++) {
-  assert.strict.equal(dataset.match(prefix + i, null, null, '').length, dimSquared)
+  assert.strict.equal(dataset.match(rdf.namedNode(prefix + i), null, null, rdf.defaultGraph()).size, dimSquared)
 }
 for (j = 0; j < dim; j++) {
-  assert.strict.equal(dataset.match(null, prefix + j, null, '').length, dimSquared)
+  assert.strict.equal(dataset.match(null, rdf.namedNode(prefix + j), null, rdf.defaultGraph()).size, dimSquared)
 }
 for (k = 0; k < dim; k++) {
-  assert.strict.equal(dataset.match(null, null, prefix + k, '').length, dimSquared)
+  assert.strict.equal(dataset.match(null, null, rdf.namedNode(prefix + k), rdf.defaultGraph()).size, dimSquared)
 }
 console.timeEnd(TEST)
 
@@ -117,15 +117,15 @@ console.log(`* Memory usage for quads: ${Math.round(process.memoryUsage().rss / 
 TEST = `- Finding all ${dimQuads} quads ${dimCubed * 4} times (3 variables)`
 console.time(TEST)
 for (i = 0; i < dim; i++) {
-  assert.strict.equal(dataset.match(prefix + i, null, null, null).length, dimCubed)
+  assert.strict.equal(dataset.match(rdf.namedNode(prefix + i), null, null, null).size, dimCubed)
 }
 for (j = 0; j < dim; j++) {
-  assert.strict.equal(dataset.match(null, prefix + j, null, null).length, dimCubed)
+  assert.strict.equal(dataset.match(null, rdf.namedNode(prefix + j), null, null).size, dimCubed)
 }
 for (k = 0; k < dim; k++) {
-  assert.strict.equal(dataset.match(null, null, prefix + k, null).length, dimCubed)
+  assert.strict.equal(dataset.match(null, null, rdf.namedNode(prefix + k), null).size, dimCubed)
 }
 for (l = 0; l < dim; l++) {
-  assert.strict.equal(dataset.match(null, null, null, prefix + l).length, dimCubed)
+  assert.strict.equal(dataset.match(null, null, null, rdf.namedNode(prefix + l)).size, dimCubed)
 }
 console.timeEnd(TEST)
