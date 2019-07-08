@@ -1,19 +1,19 @@
-const N3Store = require('../lib/N3Store')
+const DatasetCore = require('../DatasetCore')
 const rdf = require('@rdfjs/data-model')
 
-describe('N3Store', () => {
-  describe('The N3Store module', () => {
+describe('DatasetCore', () => {
+  describe('The DatasetCore module', () => {
     test('should be a function', () => {
-      expect(typeof N3Store).toBe('function')
+      expect(typeof DatasetCore).toBe('function')
     })
 
-    test('should be an N3Store constructor', () => {
-      expect(new N3Store()).toBeInstanceOf(N3Store)
+    test('should be an DatasetCore constructor', () => {
+      expect(new DatasetCore()).toBeInstanceOf(DatasetCore)
     })
   })
 
-  describe('An empty N3Store', () => {
-    const store = new N3Store()
+  describe('An empty DatasetCore', () => {
+    const store = new DatasetCore()
 
     test('should have size 0', () => {
       expect(store.size).toEqual(0)
@@ -57,8 +57,8 @@ describe('N3Store', () => {
     })
   })
 
-  describe('An N3Store with initialized with 3 elements', () => {
-    const store = new N3Store([
+  describe('An DatasetCore with initialized with 3 elements', () => {
+    const store = new DatasetCore([
       rdf.quad(rdf.namedNode('s1'), rdf.namedNode('p1'), rdf.namedNode('o1')),
       rdf.quad(rdf.namedNode('s1'), rdf.namedNode('p1'), rdf.namedNode('o2')),
       rdf.quad(rdf.namedNode('s1'), rdf.namedNode('p1'), rdf.namedNode('o3'))
@@ -97,8 +97,8 @@ describe('N3Store', () => {
     })
   })
 
-  describe('An N3Store with 5 elements', () => {
-    const store = new N3Store()
+  describe('An DatasetCore with 5 elements', () => {
+    const store = new DatasetCore()
     store.add(quadify('s1', 'p1', 'o1'))
     store.add(quadify({ subject: 's1', predicate: 'p1', object: 'o2' }))
     store.add(quadify({ subject: 's1', predicate: 'p2', object: 'o2' }))
@@ -561,8 +561,8 @@ describe('N3Store', () => {
     })
   })
 
-  describe('An N3Store', () => {
-    const store = new N3Store()
+  describe('An DatasetCore', () => {
+    const store = new DatasetCore()
 
     // Test inspired by http://www.devthought.com/2012/01/18/an-object-is-not-a-hash/.
     // The value `__proto__` is not supported however – fixing it introduces too much overhead.
