@@ -1,3 +1,5 @@
+/* global describe */
+
 const standard = require('@rdfjs/dataset/test')
 const rdf = require('..')
 

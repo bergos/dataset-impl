@@ -1,3 +1,5 @@
+/* global beforeAll, describe, expect, test */
+
 const DatasetCore = require('../DatasetCore')
 const rdf = require('@rdfjs/data-model')
 

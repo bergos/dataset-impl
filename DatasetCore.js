@@ -1,12 +1,8 @@
-/* eslint max-len: [2, 150] */
-// **N3Store** objects store N3 quads by graph in memory.
-
 const datasetFactory = {
-  dataset: quads => new N3Store(quads, datasetFactory)
+  dataset: quads => new DatasetCore(quads, datasetFactory)
 }
 
-// ## Constructor
-class N3Store {
+class DatasetCore {
   constructor (quads, { factory = datasetFactory } = {}) {
     // `_graphs` contains subject, predicate, and object indexes per graph
     this._graphs = Object.create(null)
@@ -75,36 +71,23 @@ class N3Store {
   // and iteration halts when it returns truthy for any quad.
   // If instead `array` is given, each result is added to the array.
   _findInIndex (index0, key0, key1, key2, name0, name1, name2, graph, iteratee, array) {
-    let tmp
-    let index1
-    let index2
-    const varCount = !key0 + !key1 + !key2
-
-    // depending on the number of variables, keys or reverse index are faster
-
-    const entityKeys = varCount > 1 ? Object.keys(this._ids) : this._entities
-
     // If a key is specified, use only that part of index 0.
     if (key0) {
-      tmp = index0
-      index0 = {}
-      index0[key0] = tmp[key0]
+      index0 = { [key0]: index0[key0] }
     }
-    for (const value0 in index0) {
-      const entity0 = entityKeys[value0]
 
-      index1 = index0[value0]
+    for (const value0 in index0) {
+      let index1 = index0[value0]
+
       if (index1) {
         // If a key is specified, use only that part of index 1.
         if (key1) {
-          tmp = index1
-          index1 = {}
-          index1[key1] = tmp[key1]
+          index1 = { [key1]: index1[key1] }
         }
-        for (const value1 in index1) {
-          const entity1 = entityKeys[value1]
 
-          index2 = index1[value1]
+        for (const value1 in index1) {
+          const index2 = index1[value1]
+
           if (index2) {
             // If a key is specified, use only that part of index 2, if it exists.
             const values = key2 ? (key2 in index2 ? [key2] : []) : Object.keys(index2)
@@ -128,13 +111,14 @@ class N3Store {
         }
       }
     }
+
     return array
   }
 
   // ### `__getGraphs` returns an array with the given graph,
   // or all graphs if the argument is null or undefined.
   _getGraphs (graph) {
-    if (!isString(graph)) {
+    if (typeof graph !== 'string') {
       return this._graphs
     }
     const graphs = {}
@@ -146,10 +130,10 @@ class N3Store {
   // Setting any field to `undefined` or `null` indicates a wildcard.
   _getQuads (subject, predicate, object, graph) {
     // Convert terms to internal string representation
-    subject = subject && N3Store.toId(subject)
-    predicate = predicate && N3Store.toId(predicate)
-    object = object && N3Store.toId(object)
-    graph = graph && N3Store.toId(graph)
+    subject = DatasetCore.toId(subject)
+    predicate = DatasetCore.toId(predicate)
+    object = DatasetCore.toId(object)
+    graph = DatasetCore.toId(graph)
 
     const quads = []
     const graphs = this._getGraphs(graph)
@@ -161,9 +145,16 @@ class N3Store {
     let objectId
 
     // Translate IRIs to internal index keys.
-    if ((isString(subject) && !(subjectId = ids[subject])) ||
-        (isString(predicate) && !(predicateId = ids[predicate])) ||
-        (isString(object) && !(objectId = ids[object]))) {
+    // Variables are assigned inside the if !!!
+    if (typeof subject === 'string' && !(subjectId = ids[subject])) {
+      return quads
+    }
+
+    if (typeof predicate === 'string' && !(predicateId = ids[predicate])) {
+      return quads
+    }
+
+    if (typeof object === 'string' && !(objectId = ids[object])) {
       return quads
     }
 
@@ -175,25 +166,20 @@ class N3Store {
         if (subjectId) {
           if (objectId) {
             // If subject and object are given, the object index will be the fastest
-            this._findInIndex(content.objects, objectId, subjectId, predicateId,
-              'object', 'subject', 'predicate', graphId, null, quads)
+            this._findInIndex(content.objects, objectId, subjectId, predicateId, 'object', 'subject', 'predicate', graphId, null, quads)
           } else {
             // If only subject and possibly predicate are given, the subject index will be the fastest
-            this._findInIndex(content.subjects, subjectId, predicateId, null,
-              'subject', 'predicate', 'object', graphId, null, quads)
+            this._findInIndex(content.subjects, subjectId, predicateId, null, 'subject', 'predicate', 'object', graphId, null, quads)
           }
         } else if (predicateId) {
           // If only predicate and possibly object are given, the predicate index will be the fastest
-          this._findInIndex(content.predicates, predicateId, objectId, null,
-            'predicate', 'object', 'subject', graphId, null, quads)
+          this._findInIndex(content.predicates, predicateId, objectId, null, 'predicate', 'object', 'subject', graphId, null, quads)
         } else if (objectId) {
           // If only object is given, the object index will be the fastest
-          this._findInIndex(content.objects, objectId, null, null,
-            'object', 'subject', 'predicate', graphId, null, quads)
+          this._findInIndex(content.objects, objectId, null, null, 'object', 'subject', 'predicate', graphId, null, quads)
         } else {
           // If nothing is given, iterate subjects and predicates first
-          this._findInIndex(content.subjects, null, null, null,
-            'subject', 'predicate', 'object', graphId, null, quads)
+          this._findInIndex(content.subjects, null, null, null, 'subject', 'predicate', 'object', graphId, null, quads)
         }
       }
     }
@@ -226,13 +212,12 @@ class N3Store {
   // Setting any field to `undefined` or `null` indicates a wildcard.
   _some (iteratee, subject, predicate, object, graph) {
     // Convert terms to internal string representation
-    subject = subject && N3Store.toId(subject)
-    predicate = predicate && N3Store.toId(predicate)
-    object = object && N3Store.toId(object)
-    graph = graph && N3Store.toId(graph)
+    subject = DatasetCore.toId(subject)
+    predicate = DatasetCore.toId(predicate)
+    object = DatasetCore.toId(object)
+    graph = DatasetCore.toId(graph)
 
     const graphs = this._getGraphs(graph)
-    let content
 
     const ids = this._ids
     let subjectId
@@ -240,43 +225,54 @@ class N3Store {
     let objectId
 
     // Translate IRIs to internal index keys.
-    if ((isString(subject) && !(subjectId = ids[subject])) ||
-        (isString(predicate) && !(predicateId = ids[predicate])) ||
-        (isString(object) && !(objectId = ids[object]))) {
+    // Variables are assigned inside the if !!!
+    if (typeof subject === 'string' && !(subjectId = ids[subject])) {
+      return false
+    }
+
+    if (typeof predicate === 'string' && !(predicateId = ids[predicate])) {
+      return false
+    }
+
+    if (typeof object === 'string' && !(objectId = ids[object])) {
       return false
     }
 
     for (const graphId in graphs) {
       // Only if the specified graph contains triples, there can be results
-      content = graphs[graphId]
-      if (content) {
-        // Choose the optimal index, based on what fields are present
-        if (subjectId) {
-          if (objectId) {
-            // If subject and object are given, the object index will be the fastest
-            if (this._findInIndex(content.objects, objectId, subjectId, predicateId, 'object', 'subject', 'predicate', graphId, iteratee, null)) {
-              return true
-            }
-          } else if (this._findInIndex(content.subjects, subjectId, predicateId, null, 'subject', 'predicate', 'object', graphId, iteratee, null)) {
-            // If only subject and possibly predicate are given, the subject index will be the fastest
+      const content = graphs[graphId]
+
+      if (!content) {
+        continue
+      }
+
+      // Choose the optimal index, based on what fields are present
+      if (subjectId) {
+        if (objectId) {
+          // If subject and object are given, the object index will be the fastest
+          if (this._findInIndex(content.objects, objectId, subjectId, predicateId, 'object', 'subject', 'predicate', graphId, iteratee, null)) {
             return true
           }
-        } else if (predicateId) {
-          // If only predicate and possibly object are given, the predicate index will be the fastest
-          if (this._findInIndex(content.predicates, predicateId, objectId, null, 'predicate', 'object', 'subject', graphId, iteratee, null)) {
-            return true
-          }
-        } else if (objectId) {
-          // If only object is given, the object index will be the fastest
-          if (this._findInIndex(content.objects, objectId, null, null, 'object', 'subject', 'predicate', graphId, iteratee, null)) {
-            return true
-          }
-        } else if (this._findInIndex(content.subjects, null, null, null, 'subject', 'predicate', 'object', graphId, iteratee, null)) {
-          // If nothing is given, iterate subjects and predicates first
+        } else if (this._findInIndex(content.subjects, subjectId, predicateId, null, 'subject', 'predicate', 'object', graphId, iteratee, null)) {
+          // If only subject and possibly predicate are given, the subject index will be the fastest
           return true
         }
+      } else if (predicateId) {
+        // If only predicate and possibly object are given, the predicate index will be the fastest
+        if (this._findInIndex(content.predicates, predicateId, objectId, null, 'predicate', 'object', 'subject', graphId, iteratee, null)) {
+          return true
+        }
+      } else if (objectId) {
+        // If only object is given, the object index will be the fastest
+        if (this._findInIndex(content.objects, objectId, null, null, 'object', 'subject', 'predicate', graphId, iteratee, null)) {
+          return true
+        }
+      } else if (this._findInIndex(content.subjects, null, null, null, 'subject', 'predicate', 'object', graphId, iteratee, null)) {
+        // If nothing is given, iterate subjects and predicates first
+        return true
       }
     }
+
     return false
   }
 
@@ -298,16 +294,18 @@ class N3Store {
 
   add (quad) {
     // Convert terms to internal string representation
-    const graph = N3Store.toId(quad.graph)
-    const object = N3Store.toId(quad.object)
-    const predicate = N3Store.toId(quad.predicate)
-    const subject = N3Store.toId(quad.subject)
+    const graph = DatasetCore.toId(quad.graph)
+    const object = DatasetCore.toId(quad.object)
+    const predicate = DatasetCore.toId(quad.predicate)
+    const subject = DatasetCore.toId(quad.subject)
 
     // Find the graph that will contain the triple
     let graphItem = this._graphs[graph]
+
     // Create the graph if it doesn't exist yet
     if (!graphItem) {
       graphItem = this._graphs[graph] = { subjects: {}, predicates: {}, objects: {} }
+
       // Freezing a graph helps subsequent `add` performance,
       // and properties will never be modified anyway
       Object.freeze(graphItem)
@@ -333,10 +331,10 @@ class N3Store {
 
   delete (quad) {
     // Convert terms to internal string representation
-    let subject = N3Store.toId(quad.subject)
-    let predicate = N3Store.toId(quad.predicate)
-    let object = N3Store.toId(quad.object)
-    let graph = N3Store.toId(quad.graph)
+    let subject = DatasetCore.toId(quad.subject)
+    let predicate = DatasetCore.toId(quad.predicate)
+    let object = DatasetCore.toId(quad.object)
+    const graph = DatasetCore.toId(quad.graph)
 
     // Find internal identifiers for all components
     // and verify the quad exists.
@@ -379,8 +377,10 @@ class N3Store {
 
   static toId (term) {
     if (!term) {
-      return ''
+      return null
     }
+
+    let datatypeOrLanguage = ''
 
     switch (term.termType) {
       case 'NamedNode': return term.value
@@ -388,19 +388,18 @@ class N3Store {
       case 'Variable': return `?${term.value}`
       case 'DefaultGraph': return ''
       case 'Literal':
-        const datatype = term.datatype && term.datatype.value !== xsd.string ? `^^${term.datatype.value}` : ''
-        const language = term.language ? `@${term.language}` : datatype
+        if (term.datatype && term.datatype.value !== 'http://www.w3.org/2001/XMLSchema#string') {
+          datatypeOrLanguage = `^^${term.datatype.value}`
+        }
 
-        return `"${term.value}"${language}`
+        if (term.language) {
+          datatypeOrLanguage = `@${term.language}`
+        }
+
+        return `"${term.value}"${datatypeOrLanguage}`
       default: throw new Error(`Unexpected termType: ${term.termType}`)
     }
   }
 }
 
-// Determines whether the argument is a string
-function isString (s) {
-  return typeof s === 'string' || s instanceof String
-}
-
-// ## Exports
-module.exports = N3Store
+module.exports = DatasetCore

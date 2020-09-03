@@ -22,12 +22,9 @@ function runTest (label, test) {
 
 program
   .option('-r, --rdf <package>', 'package to test', '..')
-  .option('-t, --test <test>', 'tests to run', (test, tests) => {
-    tests.push(test)
-
-    return tests
-  }, [])
-  .option('-d, --dimension <dimension>', 'term dimension size', parseInt, defaults.dimension)
+  .option('-t, --test <test>', 'tests to run', (test, tests) => tests.concat([test]), [])
+  .option('-n, --loop <number>', 'loop x times', parseFloat, 1)
+  .option('-d, --dimension <dimension>', 'term dimension size', parseFloat, defaults.dimension)
   .option('-p, --prefix <prefix>', 'prefix for Named Nodes', defaults.prefix)
   .parse(process.argv)
 
@@ -38,11 +35,15 @@ if (program.test.length === 0) {
 }
 
 program.test.forEach(test => {
-  require(`./tests/${test}`)({
-    dimension: program.dimension,
-    prefix: program.prefix,
-    rdf: require(program.rdf),
-    memoryUsage,
-    runTest
-  })
+  const func = require(`./tests/${test}`)
+
+  for (let i = 0; i < program.loop; i++) {
+    func({
+      dimension: program.dimension,
+      prefix: program.prefix,
+      rdf: require(program.rdf),
+      memoryUsage,
+      runTest
+    })
+  }
 })
